@@ -1,5 +1,7 @@
 package com.discordoauth2;
 
+import com.discordoauth2.payload.Token;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import discord4j.rest.util.RouteUtils;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import reactor.core.publisher.Mono;
@@ -15,6 +17,8 @@ public class OAuth2Provider {
 
     private final OAuth2Configuration configuration;
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     public OAuth2Provider(OAuth2Configuration configuration) {
         this.configuration = configuration;
     }
@@ -26,34 +30,27 @@ public class OAuth2Provider {
     public String authorizeUri() {
         return BASE_URI + AUTHORIZATION_URI + "?response_type=code"
                 + "&client_id=" + configuration.getClientId().asString()
-                + "&scope=" + configuration.getScopes().asString()
+                + "&scope=" + RouteUtils.encodeUriComponent(configuration.getScopesAsString(), RouteUtils.Type.QUERY)
                 + "&redirect_uri=" + RouteUtils.encodeUriComponent(configuration.getRedirectUri(), RouteUtils.Type.PATH_SEGMENT)
-                + "&state=" + configuration.getState();
+                + "&state=" + RouteUtils.encodeUriComponent(configuration.getState(), RouteUtils.Type.QUERY_PARAM);
     }
 
-    public String tokenUri() {
-        return BASE_URI + TOKEN_URI;
-    }
+    public Mono<Token> token(String code, String state) {
+        if (!state.equals(configuration.getState()))
+            return Mono.error(new IllegalStateException("State returned is not the same as in the configuration, someone might be doing something fishy!"));
 
-    public Mono<String> token(String code) {
-        return HttpClient.create()
-                .headers(header -> header.add(HttpHeaderNames.CONTENT_TYPE, "application/x-www-form-urlencoded"))
+        return client.headers(header -> header.add(HttpHeaderNames.CONTENT_TYPE, "application/x-www-form-urlencoded"))
                 .post()
-                .uri(tokenUri())
-                .sendForm((req, form) -> {
-                    form.attr("client_id", configuration.getClientId().asString())
-                            .attr("client_secret", configuration.getClientSecret())
-                            .attr("grant_type", "authorization_code")
-                            .attr("code", code)
-                            .attr("redirect_uri", configuration.getRedirectUri())
-                            .attr("scope", configuration.getScopes().asString());
-                })
+                .uri(TOKEN_URI)
+                .sendForm((req, form) -> form.attr("client_id", configuration.getClientId().asString())
+                        .attr("client_secret", configuration.getClientSecret())
+                        .attr("grant_type", "authorization_code")
+                        .attr("code", code)
+                        .attr("redirect_uri", configuration.getRedirectUri())
+                        .attr("scope", configuration.getScopesAsString()))
                 .responseContent()
                 .aggregate()
-                .asString();
-    }
-
-    public String revokeUri() {
-        return BASE_URI + REVOKE_URI;
+                .asString()
+                .flatMap(json -> Mono.fromCallable(() -> mapper.readValue(json, Token.class)));
     }
 }

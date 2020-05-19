@@ -1,16 +1,19 @@
 package com.discordoauth2;
 
 import discord4j.rest.util.Snowflake;
+
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class OAuth2Configuration {
     private final Snowflake clientId;
     private final String clientSecret;
-    private final ScopeSet scopes;
+    private final Set<Scope> scopes;
     private final String redirectUri;
     private final String state;
 
-    public OAuth2Configuration(Snowflake clientId, String clientSecret, ScopeSet scopes, String redirectUri, String state) {
+    public OAuth2Configuration(Snowflake clientId, String clientSecret, Set<Scope> scopes, String redirectUri, String state) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.scopes = scopes;
@@ -19,7 +22,7 @@ public class OAuth2Configuration {
             this.state = state;
         else {
             Random random = new Random();
-            char[] validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$^_+-".toCharArray();
+            char[] validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*-+=".toCharArray();
             char[] bytes = new char[20];
             for (int i = 0; i < bytes.length; i++)
                 bytes[i] = validChars[random.nextInt(validChars.length - 1)];
@@ -31,8 +34,12 @@ public class OAuth2Configuration {
         return clientSecret;
     }
 
-    public ScopeSet getScopes() {
+    public Set<Scope> getScopes() {
         return scopes;
+    }
+
+    public String getScopesAsString() {
+        return scopes.stream().map(Scope::getScope).collect(Collectors.joining(" "));
     }
 
     public String getRedirectUri() {
@@ -50,11 +57,11 @@ public class OAuth2Configuration {
     public static class OAuth2ConfigurationBuilder {
         private final Snowflake clientId;
         private final String clientSecret;
-        private final ScopeSet scopes;
+        private final Set<Scope> scopes;
         private final String redirectUri;
         private String state;
 
-        public OAuth2ConfigurationBuilder(Snowflake clientId, String clientSecret, ScopeSet scopes, String redirectUri) {
+        public OAuth2ConfigurationBuilder(Snowflake clientId, String clientSecret, Set<Scope> scopes, String redirectUri) {
             this.clientId = clientId;
             this.clientSecret = clientSecret;
             this.scopes = scopes;
