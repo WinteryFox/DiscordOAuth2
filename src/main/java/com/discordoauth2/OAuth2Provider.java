@@ -4,8 +4,11 @@ import com.discordoauth2.payload.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import discord4j.rest.util.RouteUtils;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 public class OAuth2Provider {
     private final String BASE_URI = "https://discord.com/api/oauth2";
@@ -48,9 +51,12 @@ public class OAuth2Provider {
                         .attr("code", code)
                         .attr("redirect_uri", configuration.getRedirectUri())
                         .attr("scope", configuration.getScopesAsString()))
-                .responseContent()
-                .aggregate()
-                .asString()
-                .flatMap(json -> Mono.fromCallable(() -> mapper.readValue(json, Token.class)));
+                .responseSingle((response, buffer) -> buffer.asString().map(b -> Tuples.of(response, b)))
+                .flatMap(tuple -> {
+                    if (tuple.getT1().status() != HttpResponseStatus.OK)
+                        return Mono.error(new RuntimeException(tuple.getT2()));
+
+                    return Mono.fromCallable(() -> mapper.readValue(tuple.getT2(), Token.class));
+                });
     }
 }

@@ -22,7 +22,7 @@ public class OAuth2Configuration {
             this.state = state;
         else {
             Random random = new Random();
-            char[] validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*-+=".toCharArray();
+            char[] validChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890!@#$%^&*-+=_".toCharArray();
             char[] bytes = new char[20];
             for (int i = 0; i < bytes.length; i++)
                 bytes[i] = validChars[random.nextInt(validChars.length - 1)];
