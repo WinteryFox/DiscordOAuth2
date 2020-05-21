@@ -8,6 +8,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.server.HttpServer;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,9 +42,10 @@ public class Test {
                                 return provider.token(
                                         decoder.parameters().get("code").get(0),
                                         decoder.parameters().get("state").get(0))
-                                        .flatMap(json -> Mono.fromCallable(() -> mapper.writeValueAsString(json)))
-                                        .flatMap(token -> response.header(HttpHeaderNames.CONTENT_TYPE, "application/json")
-                                                .sendString(Mono.just(token)).then());
+                                        .map(DiscordOAuth2Client::new)
+                                        .flatMap(DiscordOAuth2Client::getUser)
+                                        .flatMap(user -> response.header(HttpHeaderNames.CONTENT_TYPE, "application/json")
+                                                .sendString(Mono.just(user)).then());
                             });
                 })
                 .bindNow()

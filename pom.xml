@@ -24,7 +24,7 @@
         <dependency>
             <groupId>com.github.WinteryFox</groupId>
             <artifactId>Discord4J</artifactId>
-            <version>008360c57b</version>
+            <version>7dab660dd4</version>
         </dependency>
     </dependencies>
 

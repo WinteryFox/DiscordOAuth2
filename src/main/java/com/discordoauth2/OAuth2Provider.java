@@ -2,24 +2,17 @@ package com.discordoauth2;
 
 import com.discordoauth2.payload.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import discord4j.rest.route.Routes;
 import discord4j.rest.util.RouteUtils;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
 public class OAuth2Provider {
-    private final String BASE_URI = "https://discord.com/api/oauth2";
-    private final String AUTHORIZATION_URI = "/authorize";
-    private final String TOKEN_URI = "/token";
-    private final String REVOKE_URI = "/revoke";
-
-    private final HttpClient client = HttpClient.create().baseUrl(BASE_URI);
-
+    private final HttpClient client = HttpClient.create().baseUrl(Routes.BASE_URL);
     private final OAuth2Configuration configuration;
-
     private final ObjectMapper mapper = new ObjectMapper();
 
     public OAuth2Provider(OAuth2Configuration configuration) {
@@ -31,7 +24,7 @@ public class OAuth2Provider {
     }
 
     public String authorizeUri() {
-        return BASE_URI + AUTHORIZATION_URI + "?response_type=code"
+        return Routes.BASE_URL + Routes.OAUTH2_AUTHORIZE.getUriTemplate() + "?response_type=code"
                 + "&client_id=" + configuration.getClientId().asString()
                 + "&scope=" + RouteUtils.encodeUriComponent(configuration.getScopesAsString(), RouteUtils.Type.QUERY)
                 + "&redirect_uri=" + RouteUtils.encodeUriComponent(configuration.getRedirectUri(), RouteUtils.Type.PATH_SEGMENT)
@@ -44,7 +37,7 @@ public class OAuth2Provider {
 
         return client.headers(header -> header.add(HttpHeaderNames.CONTENT_TYPE, "application/x-www-form-urlencoded"))
                 .post()
-                .uri(TOKEN_URI)
+                .uri(Routes.OAUTH2_TOKEN.getUriTemplate())
                 .sendForm((req, form) -> form.attr("client_id", configuration.getClientId().asString())
                         .attr("client_secret", configuration.getClientSecret())
                         .attr("grant_type", "authorization_code")
