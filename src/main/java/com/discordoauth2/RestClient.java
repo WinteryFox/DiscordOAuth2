@@ -1,33 +1,29 @@
 package com.discordoauth2;
 
-import com.discordoauth2.payload.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import discord4j.core.object.entity.Member;
-import discord4j.rest.http.ExchangeStrategies;
-import discord4j.rest.http.client.ClientRequest;
-import discord4j.rest.http.client.ClientResponse;
-import discord4j.rest.http.client.DiscordWebClient;
-import discord4j.rest.route.Route;
-import discord4j.rest.route.Routes;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
-import java.util.Collections;
-
 public class RestClient {
-    private final DiscordWebClient client;
+    private final HttpClient client;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public RestClient(String token) {
-        this.client = new DiscordWebClient(
-                HttpClient.create().baseUrl(Routes.BASE_URL),
-                ExchangeStrategies.jackson(new ObjectMapper()),
-                token,
-                "Bearer",
-                Collections.emptyList()
-        );
+        this.client = HttpClient.create().headers(headers -> headers.add("Authorization", "Bearer " + token));
     }
 
-    public Mono<ClientResponse> request(Route route) {
-        return client.exchange(new ClientRequest(route.newRequest()));
+    public <T> Mono<T> request(Route route, Class<T> clazz) {
+        return client
+                .request(route.getMethod())
+                .uri(Routes.BASE_URL + route.getUri())
+                .responseSingle((httpClientResponse, byteBufMono) -> {
+                    if (httpClientResponse.status().code() < 200 || httpClientResponse.status().code() >= 300)
+                        return Mono.error(
+                                new IllegalStateException("Request returned " + httpClientResponse.status().code() + ": " +
+                                        httpClientResponse.status().reasonPhrase()));
+
+                    return byteBufMono.asString()
+                            .flatMap(json -> Mono.fromCallable(() -> mapper.readValue(json, clazz)));
+                });
     }
 }

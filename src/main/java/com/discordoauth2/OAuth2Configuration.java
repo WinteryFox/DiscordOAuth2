@@ -1,19 +1,17 @@
 package com.discordoauth2;
 
-import discord4j.rest.util.Snowflake;
-
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class OAuth2Configuration {
-    private final Snowflake clientId;
+    private final Long clientId;
     private final String clientSecret;
     private final Set<Scope> scopes;
     private final String redirectUri;
     private final String state;
 
-    public OAuth2Configuration(Snowflake clientId, String clientSecret, Set<Scope> scopes, String redirectUri, String state) {
+    public OAuth2Configuration(Long clientId, String clientSecret, Set<Scope> scopes, String redirectUri, String state) {
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.scopes = scopes;
@@ -46,7 +44,7 @@ public class OAuth2Configuration {
         return redirectUri;
     }
 
-    public Snowflake getClientId() {
+    public Long getClientId() {
         return clientId;
     }
 
@@ -55,13 +53,13 @@ public class OAuth2Configuration {
     }
 
     public static class OAuth2ConfigurationBuilder {
-        private final Snowflake clientId;
+        private final Long clientId;
         private final String clientSecret;
         private final Set<Scope> scopes;
         private final String redirectUri;
         private String state;
 
-        public OAuth2ConfigurationBuilder(Snowflake clientId, String clientSecret, Set<Scope> scopes, String redirectUri) {
+        public OAuth2ConfigurationBuilder(Long clientId, String clientSecret, Set<Scope> scopes, String redirectUri) {
             this.clientId = clientId;
             this.clientSecret = clientSecret;
             this.scopes = scopes;

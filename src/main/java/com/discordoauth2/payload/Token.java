@@ -4,15 +4,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Token {
     @JsonProperty("token_type")
-    String tokenType;
+    private String tokenType;
     @JsonProperty("access_token")
-    String accessToken;
-    String scope;
+    private String accessToken;
+    private String scope;
     @JsonProperty("expires_in")
-    Long expiry;
+    private Long expiry;
     @JsonProperty("refresh_token")
-    String refreshToken;
-    Webhook webhook;
+    private String refreshToken;
+    private Webhook webhook;
 
     public Token() {
     }

@@ -2,13 +2,14 @@ package com.discordoauth2;
 
 import com.discordoauth2.payload.Token;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import discord4j.rest.route.Routes;
-import discord4j.rest.util.RouteUtils;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 import reactor.util.function.Tuples;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class OAuth2Provider {
     private final HttpClient client = HttpClient.create().baseUrl(Routes.BASE_URL);
@@ -24,11 +25,11 @@ public class OAuth2Provider {
     }
 
     public String authorizeUri() {
-        return Routes.BASE_URL + Routes.OAUTH2_AUTHORIZE.getUriTemplate() + "?response_type=code"
-                + "&client_id=" + configuration.getClientId().asString()
-                + "&scope=" + RouteUtils.encodeUriComponent(configuration.getScopesAsString(), RouteUtils.Type.QUERY)
-                + "&redirect_uri=" + RouteUtils.encodeUriComponent(configuration.getRedirectUri(), RouteUtils.Type.PATH_SEGMENT)
-                + "&state=" + RouteUtils.encodeUriComponent(configuration.getState(), RouteUtils.Type.QUERY_PARAM);
+        return Routes.BASE_URL + Routes.AUTHORIZE.getUri() + "?response_type=code"
+                + "&client_id=" + configuration.getClientId()
+                + "&scope=" + URLEncoder.encode(configuration.getScopesAsString(), StandardCharsets.UTF_8)
+                + "&redirect_uri=" + URLEncoder.encode(configuration.getRedirectUri(), StandardCharsets.UTF_8)
+                + "&state=" + URLEncoder.encode(configuration.getState(), StandardCharsets.UTF_8);
     }
 
     public Mono<Token> token(String code, String state) {
@@ -37,8 +38,8 @@ public class OAuth2Provider {
 
         return client.headers(header -> header.add(HttpHeaderNames.CONTENT_TYPE, "application/x-www-form-urlencoded"))
                 .post()
-                .uri(Routes.OAUTH2_TOKEN.getUriTemplate())
-                .sendForm((req, form) -> form.attr("client_id", configuration.getClientId().asString())
+                .uri(Routes.TOKEN.getUri())
+                .sendForm((req, form) -> form.attr("client_id", configuration.getClientId().toString())
                         .attr("client_secret", configuration.getClientSecret())
                         .attr("grant_type", "authorization_code")
                         .attr("code", code)

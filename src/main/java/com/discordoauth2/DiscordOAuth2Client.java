@@ -1,13 +1,10 @@
 package com.discordoauth2;
 
 import com.discordoauth2.payload.Token;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import discord4j.rest.route.Routes;
 import reactor.core.publisher.Mono;
 
 class DiscordOAuth2Client {
     private final RestClient client;
-    private final ObjectMapper mapper = new ObjectMapper();
     private final String token;
     private final String refreshToken;
 
@@ -21,8 +18,7 @@ class DiscordOAuth2Client {
         this(token.getAccessToken(), token.getRefreshToken());
     }
 
-    public Mono<String> getUser() {
-        return client.request(Routes.CURRENT_USER_GET)
-                .flatMap(response -> response.bodyToMono(String.class));
+    public Mono<User> getUser() {
+        return client.request(Routes.SELF_GET, User.class);
     }
 }
